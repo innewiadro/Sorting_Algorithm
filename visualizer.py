@@ -11,6 +11,9 @@ class DrawInformation:
     green = 0, 255, 0
     red = 255, 0, 0
     grey = 128, 128, 128
+    blue = 0, 191, 255
+    yellow = 255, 255, 0
+
     BACKGROUND_COLOR = white
 
     GRADIENTS = [
@@ -55,7 +58,7 @@ def draw(draw_info, algo_name, ascending):
 
     sorting = draw_info.FONT.render("I - Insert Sort | B - Bubble Sort | S - Selection Sort | Z - Bogo Sort", 1,
                                     draw_info.black)
-    sorting2 = draw_info.FONT.render(" M - Merge Sort | Q - Quick Sort", 1, draw_info.black)
+    sorting2 = draw_info.FONT.render(" M - Merge Sort | Q - Quick Sort | H - Heap Sort", 1, draw_info.black)
     draw_info.window.blit(sorting, (draw_info.width / 2 - sorting.get_width() / 2, 70))
     draw_info.window.blit(sorting2, (draw_info.width / 2 - sorting.get_width() / 2, 95))
     draw_list(draw_info)
@@ -263,29 +266,74 @@ def quick_sort(draw_info, ascending=True):
     yield from quick_sort_rec(lst, 0, len(lst)-1)
 
 
-def heap_sort(draw_info):
-    h = []
+def heap_sort(draw_info, ascending=True):
     lst = draw_info.lst
-    for i in range(1, len(lst)):
-        heappush(h, i)
-    lst.clear()
-    for j in range(len(h)):
-        lst.append(heappop(h))
 
-    return lst
+    def heapify(lst, size_of_heap, i):
+
+        if ascending == True:
+            largest = i
+            left = 2 * i + 1
+            right = 2 * i + 2
+
+            if left < size_of_heap and lst[largest] < lst[left]:
+                largest = left
+
+            if right < size_of_heap and lst[largest] < lst[right]:
+                largest = right
+
+            if largest != i:
+                lst[i], lst[largest] = lst[largest], lst[i]
+                draw_list(draw_info, {largest: draw_info.green, i: draw_info.red}, True)
+
+                heapify(lst, size_of_heap, largest)
+        else:
+
+            smallest = i
+            left = 2 * i + 1
+            right = 2 * i + 2
+
+            if left < size_of_heap and lst[left] < lst[smallest]:
+                smallest = left
+
+            if right < size_of_heap and lst[right] < lst[smallest]:
+                smallest = right
+
+            if smallest != i:
+                lst[i], lst[smallest] = lst[smallest], lst[i]
+                draw_list(draw_info, {smallest: draw_info.green, i: draw_info.red}, True)
+
+                heapify(lst, size_of_heap, smallest)
+
+    def heap_Sort_rec(lst):
+       size_of_heap = len(lst)
+
+       for i in range(size_of_heap // 2 - 1, -1, -1):
+
+           heapify(lst, size_of_heap, i)
+
+
+       for i in range(size_of_heap-1, 0, -1):
+
+           lst[0], lst[i] = lst[i], lst[0]
+           draw_list(draw_info, {0: draw_info.blue, i: draw_info.yellow}, True)
+           heapify(lst, i, 0)
+           yield True
+
+    yield from heap_Sort_rec(lst)
 
 
 def main():
     run = True
     clock = pygame.time.Clock()
 
-    n = 50
+    n = 300
     min_val = 0
-    max_val = 50
+    max_val = 700
 
     lst = generate_starting_list(n, min_val, max_val)
 
-    draw_info = DrawInformation(800, 600, lst)
+    draw_info = DrawInformation(1600, 1000, lst)
 
     sorting = False
     ascending = True
@@ -339,6 +387,9 @@ def main():
             elif event.key == pygame.K_z and not sorting:
                 sorting_algorithm = bogo_sort
                 sorting_algo_name = "Bogo Sort"
+            elif event.key == pygame.K_h and not sorting:
+                sorting_algorithm = heap_sort
+                sorting_algo_name = "Heap_Sort"
     pygame.quit()
 
 
