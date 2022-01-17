@@ -40,7 +40,7 @@ class DrawInformation:
         self.min_val = min(lst)
         self.max_val = max(lst)
 
-        self.block_width = round((self.width - self.SIDE_PAD) / len(lst))
+        self.block_width = (self.width - self.SIDE_PAD) / len(lst)
         self.block_height = math.floor((self.height - self.TOP_PAD) / (self.max_val - self.min_val))
         self.start_x = self.SIDE_PAD // 2
 
@@ -64,12 +64,9 @@ def draw(draw_info, algo_name, ascending, n, speed):
     draw_info.window.blit(title2, (draw_info.width/2 - title2.get_width() / 2, 100))
 
     sorting = draw_info.FONT.render("I - Insert Sort | B - Bubble Sort | S - Selection Sort | Z - Bogo Sort | M - Merge "
-                                    "Sort | Q - Quick Sort | H - Heap Sort | X - Shell Sort", 1,
+                                    "Sort | Q - Quick Sort | H - Heap Sort | X - Shell Sort | Y - Radix Sort", 1,
                                     draw_info.black)
     draw_info.window.blit(sorting, (draw_info.width / 2 - sorting.get_width() / 2, 140))
-
-
-
 
     draw_list(draw_info)
     pygame.display.update()
@@ -112,16 +109,18 @@ def bubble_sort(draw_info, ascending=True):
     lst = draw_info.lst
 
     for i in range(len(lst) - 1):
+
         for j in range(len(lst) - 1 - i):
             num1 = lst[j]
             num2 = lst[j + 1]
 
             if (num1 > num2 and ascending) or (num1 < num2 and not ascending):
                 lst[j], lst[j+1] = lst[j+1], lst[j]
-                draw_list(draw_info, {j: draw_info.green, j + 1: draw_info.red}, True)
-                yield True
 
-    return lst
+                draw_list(draw_info, {j: draw_info.green, j + 1: draw_info.red}, True)
+        yield True
+
+
 
 
 def insertion_sort(draw_info, ascending=True):
@@ -358,6 +357,53 @@ def shell_sort(draw_info, ascending=True):
     yield from shell_sort_rec(lst)
 
 
+def radix_sort(draw_info, ascending=True):
+    lst = draw_info.lst
+
+    def counting_sort(lst, exp1):
+        n = len(lst)
+        output = [0] * n
+
+        count = [0] * 10
+
+        for i in range(0, n):
+            index = lst[i] // exp1
+            draw_list(draw_info, {lst[i]: draw_info.green, index: draw_info.red}, True)
+            count[index % 10] += 1
+
+        for i in range(1, 10):
+            count[i] += count[i - 1]
+            draw_list(draw_info, {lst[i]: draw_info.green, output[i]: draw_info.red}, True)
+
+        i = n - 1
+
+        while i >= 0:
+            index = lst[i] // exp1
+            output[count[index % 10] - 1] = lst[i]
+            count[index % 10] -= 1
+            i -= 1
+            draw_list(draw_info, {index: draw_info.green, lst[i]:draw_info.red},True)
+
+
+        for i in range(0, len(lst)):
+
+            lst[i] = output[i]
+            draw_list(draw_info, {lst[i]: draw_info.green, output[i]: draw_info.red}, True)
+
+    def radix_sort_rec(lst):
+        max1 = max(lst)
+
+        exp = 1
+
+        while max1 / exp > 1:
+            counting_sort(lst, exp)
+
+            exp *= 10
+            radix_sort_rec(lst)
+        yield True
+
+    yield from radix_sort_rec(lst)
+
 
 def main():
     run = True
@@ -431,6 +477,9 @@ def main():
             elif event.key == pygame.K_x and not sorting:
                 sorting_algorithm = shell_sort
                 sorting_algo_name = "Shell Sort"
+            elif event.key == pygame.K_y and not sorting:
+                sorting_algorithm = radix_sort
+                sorting_algo_name = "Radix Sort"
             elif event.key == pygame.K_RIGHT and not sorting:
                 n += 10
                 lst = generate_starting_list(n, min_val, max_val)
