@@ -1,7 +1,8 @@
 import pygame
 import random
 import math
-
+import multiprocessing
+import time
 pygame.init()
 
 
@@ -48,11 +49,13 @@ class DrawInformation:
 def draw(draw_info, algo_name, ascending, n, speed):
     draw_info.window.fill(draw_info.BACKGROUND_COLOR)
 
-    title = draw_info.LARGE_FONT.render(f"{algo_name} - {'Ascending' if ascending else 'Descending'} - Numbers of Elements - {n} | Frame rate - {speed}", 1,
+    title = draw_info.LARGE_FONT.render(f"{algo_name} - {'Ascending' if ascending else 'Descending'} - Numbers of"
+                                        f" Elements - {n} | Frame rate - {speed}", 1,
                                         draw_info.black)
     draw_info.window.blit(title, (draw_info.width / 2 - title.get_width() / 2, 5))
 
-    controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending | Left Arrow - Reduce Nr. of Elem | Right Arrow - Increase Nr. of Elem. ", 1,
+    controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending | Left Arrow -"
+                                     " Reduce Nr. of Elem | Right Arrow - Increase Nr. of Elem. ", 1,
                                      draw_info.black)
     draw_info.window.blit(controls, (draw_info.width/2 - controls.get_width() / 2, 45))
 
@@ -63,8 +66,9 @@ def draw(draw_info, algo_name, ascending, n, speed):
 
     draw_info.window.blit(title2, (draw_info.width/2 - title2.get_width() / 2, 100))
 
-    sorting = draw_info.FONT.render("I - Insert Sort | B - Bubble Sort | S - Selection Sort | Z - Bogo Sort | M - Merge "
-                                    "Sort | Q - Quick Sort | H - Heap Sort | X - Shell Sort | Y - Radix Sort", 1,
+    sorting = draw_info.FONT.render("I - Insert Sort | B - Bubble Sort | S - Selection Sort | Z - Bogo Sort |"
+                                    " M - Merge Sort | Q - Quick Sort | H - Heap Sort | X - Shell Sort |"
+                                    " Y - Radix Sort", 1,
                                     draw_info.black)
     draw_info.window.blit(sorting, (draw_info.width / 2 - sorting.get_width() / 2, 140))
 
@@ -121,8 +125,6 @@ def bubble_sort(draw_info, ascending=True):
         yield True
 
 
-
-
 def insertion_sort(draw_info, ascending=True):
     lst = draw_info.lst
 
@@ -149,7 +151,7 @@ def selection_sort(draw_info, ascending=True):
     lst = draw_info.lst
     for i in range(0, len(lst) - 1):
         cur_min_idx = i
-        for j in range(i +1, len(lst)):
+        for j in range(i + 1, len(lst)):
 
             if ascending == True:
                 if lst[j] < lst[cur_min_idx]:
@@ -216,6 +218,7 @@ def merge_sort(draw_info, ascending=True):
 
 def bogo_sort(draw_info, ascending=True):
     lst = draw_info.lst
+    countdown = 10
 
     def is_sorted(lst):
         n = len(lst)
@@ -227,16 +230,20 @@ def bogo_sort(draw_info, ascending=True):
 
         return True
 
-    while is_sorted(lst) == False:
+    while is_sorted(lst) == False and countdown>0:
 
         def shuffle(lst):
+
             n = len(lst)
 
             for i in range(0, n):
                 j = random.randint(0, n - 1)
                 lst[i], lst[j] = lst[j], lst[i]
+
                 draw_list(draw_info, {j: draw_info.green, i: draw_info.red}, True)
+
         shuffle(lst)
+        countdown -= 1
     yield True
 
 
@@ -314,22 +321,19 @@ def heap_sort(draw_info, ascending=True):
 
                 heapify(lst, size_of_heap, smallest)
 
-    def heap_Sort_rec(lst):
+    def heap_sort_rec(lst):
        size_of_heap = len(lst)
 
        for i in range(size_of_heap // 2 - 1, -1, -1):
-
            heapify(lst, size_of_heap, i)
 
-
        for i in range(size_of_heap-1, 0, -1):
-
            lst[0], lst[i] = lst[i], lst[0]
            draw_list(draw_info, {0: draw_info.blue, i: draw_info.yellow}, True)
            heapify(lst, i, 0)
            yield True
 
-    yield from heap_Sort_rec(lst)
+    yield from heap_sort_rec(lst)
 
 
 def shell_sort(draw_info, ascending=True):
@@ -382,11 +386,9 @@ def radix_sort(draw_info, ascending=True):
             output[count[index % 10] - 1] = lst[i]
             count[index % 10] -= 1
             i -= 1
-            draw_list(draw_info, {index: draw_info.green, lst[i]:draw_info.red},True)
 
 
         for i in range(0, len(lst)):
-
             lst[i] = output[i]
             draw_list(draw_info, {lst[i]: draw_info.green, output[i]: draw_info.red}, True)
 
@@ -438,6 +440,7 @@ def main():
             draw(draw_info, sorting_algo_name, ascending, n, speed)
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 run = False
             if event.type != pygame.KEYDOWN:
@@ -453,6 +456,9 @@ def main():
                 ascending = True
             elif event.key == pygame.K_d and not sorting:
                 ascending = False
+            elif event.key == pygame.K_ESCAPE and sorting:
+                sorting = False
+                sorting_algorithm_generator = None
             elif event.key == pygame.K_i and not sorting:
                 sorting_algorithm = insertion_sort
                 sorting_algo_name = "Insert Sort"
@@ -469,8 +475,10 @@ def main():
                 sorting_algorithm = selection_sort
                 sorting_algo_name = "Selection sort"
             elif event.key == pygame.K_z and not sorting:
+
                 sorting_algorithm = bogo_sort
                 sorting_algo_name = "Bogo Sort"
+
             elif event.key == pygame.K_h and not sorting:
                 sorting_algorithm = heap_sort
                 sorting_algo_name = "Heap Sort"
@@ -485,7 +493,7 @@ def main():
                 lst = generate_starting_list(n, min_val, max_val)
                 draw_info.set_list(lst)
             elif event.key == pygame.K_LEFT and not sorting:
-                if n >11:
+                if n > 11:
                     n -= 10
                 lst = generate_starting_list(n, min_val, max_val)
                 draw_info.set_list(lst)
@@ -494,8 +502,8 @@ def main():
                     speed -= 2
             elif event.key == pygame.K_l and not sorting:
                 speed += 2
-            elif event.key == pygame.K_ESCAPE and sorting:
-                sorting = False
+
+
     pygame.quit()
 
 
