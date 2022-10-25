@@ -33,7 +33,6 @@
 ### Executing program
 * run in python terminal
 
-### This program inspired by
-https://www.youtube.com/watch?v=twRidO-_vqQ
+
 
     
